@@ -6,6 +6,7 @@ use std::process::Command;
 #[derive(Deserialize, Debug)]
 struct ProjectConfig {
     name: String,
+    #[allow(dead_code)]
     language: String,
     source: String,
     output: String,
