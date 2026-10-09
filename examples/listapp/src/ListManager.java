@@ -27,4 +27,3 @@ public class ListManager {
         System.out.println(sum);
     }
 }
-}

@@ -38,17 +38,30 @@ fn main() {
         println!("kaamiplier log: Building {} ", project_path);
 
         let output_dir = format!("{}/{}", project_path, config.output);
-
         fs::create_dir_all(&output_dir).expect("Failed to create output directory");
 
-        let java_file = format!(
-            "{}/{}/{}.java",
-            project_path, config.source, config.main_class
-        );
+        let source_dir = format!("{}/{}", project_path, config.source);
+        let mut java_files: Vec<String> = Vec::new();
+        let entries = fs::read_dir(&source_dir).expect("Failed to read source directory");
+
+        for entry in entries {
+            let entry = entry.expect("Failed to read file entry");
+            let path = entry.path();
+            let path_string = path.to_string_lossy().to_string();
+
+            if path_string.ends_with(".java") {
+                java_files.push(path_string);
+            }
+        }
+
+        if java_files.is_empty() {
+            println!("Kaamiplier log: No .java files found in {}!", source_dir);
+            return;
+        }
         let status = Command::new("javac")
-            .arg("-d") // The destination flag
-            .arg(&output_dir) // Where to put the .class files
-            .arg(java_file) // What to compile
+            .arg("-d")
+            .arg(&output_dir)
+            .args(&java_files)
             .status()
             .expect("Failed to spawn javac");
 
