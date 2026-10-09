@@ -1,14 +1,12 @@
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        ArrayList<Integer> numbers = new ArrayList<>();
+        ListManager manager = new ListManager();
 
-        System.out.println("Welcome to ListApp!");
-        System.out.println("Commands: add <num>, list, remove <num>, sum, exit");
-
+        System.out.println("Welcome to the Multi-File ListApp!");
+        
         while (true) {
             System.out.print("\n> ");
             String input = scanner.nextLine().trim();
@@ -21,23 +19,13 @@ public class Main {
                 System.out.println("Goodbye!");
                 break;
             } else if (command.equals("add") && parts.length > 1) {
-                int val = Integer.parseInt(parts[1]);
-                numbers.add(val);
-                System.out.println("Added " + val);
+                manager.add(Integer.parseInt(parts[1]));
             } else if (command.equals("remove") && parts.length > 1) {
-                int val = Integer.parseInt(parts[1]);
-                numbers.remove(Integer.valueOf(val));
-                System.out.println("Removed " + val);
+                manager.remove(Integer.parseInt(parts[1]));
             } else if (command.equals("list")) {
-                for (int n : numbers) {
-                    System.out.println(n);
-                }
+                manager.printList();
             } else if (command.equals("sum")) {
-                int sum = 0;
-                for (int n : numbers) {
-                    sum += n;
-                }
-                System.out.println(sum);
+                manager.printSum();
             } else {
                 System.out.println("Unknown command.");
             }
