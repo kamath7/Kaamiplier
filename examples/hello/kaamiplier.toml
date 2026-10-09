@@ -1,0 +1,5 @@
+name = "hello"
+language = "java"
+source = "src"
+output = "build"
+main_class = "Main"

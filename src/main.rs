@@ -1,10 +1,18 @@
+use serde::Deserialize;
+use std::env;
+use std::fs;
 use std::process::Command;
 
-use std::env;
+#[derive(Deserialize, Debug)]
+struct ProjectConfig {
+    name: String,
+    language: String,
+    source: String,
+    output: String,
+    main_class: String,
+}
 
 fn main() {
-    println!("Compile the java file");
-
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 3 {
@@ -15,14 +23,22 @@ fn main() {
     let action = &args[1];
     let project_path: &String = &args[2];
 
+    let config_path = format!("{}/kaamiplier.toml", project_path);
+
+    let config_contents = fs::read_to_string(&config_path)
+        .expect("Kaamiplier log: Failed to read kaamiplier.toml. Does it exist?");
+
+    let config: ProjectConfig = toml::from_str(&config_contents)
+        .expect("Kaamiplier log: Failed to parse TOML configuration");
+
     if action == "build" {
         println!("kaamiplier log: Building {} ", project_path);
 
-        let java_file = format!("{}/src/Main.java", project_path);
+        let java_file = format!("{}/{}/Main.java", project_path, config.source);
         let status = Command::new("javac")
             .arg(java_file)
             .status()
-            .expect("Failed to spawn javac");
+            .expect("Kaamiplier log: Failed to spawn javac");
 
         if status.success() {
             println!("Kaamiplier log: Build success");
@@ -32,18 +48,20 @@ fn main() {
     } else if action == "run" {
         println!("kaamiplier log: Running {}..", project_path);
 
-        let class_path = format!("{}/src", project_path);
+        let class_path = format!("{}/{}", project_path, config.source);
+
         let status = Command::new("java")
             .arg("-cp")
             .arg(class_path)
-            .arg("Main") // The name of our Java class
+            // Use config.main_class instead of hardcoded "Main"
+            .arg(&config.main_class)
             .status()
             .expect("Failed to spawn java");
 
         if status.success() {
-            println!("Kaamiplier: Run finished successfully!");
+            println!("Kaamiplier log: Run finished successfully!");
         } else {
-            println!("Kaamiplier: Run failed!");
+            println!("Kaamiplier log: Run failed!");
         }
     } else {
         println!("Kaamiplier: Unknown action '{}'", action);
