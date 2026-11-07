@@ -18,7 +18,8 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 3 {
-        println!("Kaamiplier log: Usage <build|run|clean> <project_path>");
+        // UPDATED: Added 'package' to the usage instructions
+        println!("Kaamiplier log: Usage <build|run|clean|package> <project_path>");
         return;
     }
 
@@ -48,17 +49,20 @@ fn main() {
 
     println!("Kaamiplier log: Processing project '{}'...", config.name);
 
-
     if action == "build" {
         build_project(&config, project_path);
     } else if action == "run" {
         run_project(&config, project_path);
     } else if action == "clean" {
         clean_project(&config, project_path);
+    // NEW: Added the package route
+    } else if action == "package" {
+        package_project(&config, project_path);
     } else {
         println!("Kaamiplier log: Unknown action '{}'", action);
     }
 }
+
 fn build_project(config: &ProjectConfig, project_path: &str) {
     println!("Kaamiplier log: Building {}...", project_path);
 
@@ -118,6 +122,9 @@ fn build_project(config: &ProjectConfig, project_path: &str) {
 }
 
 fn run_project(config: &ProjectConfig, project_path: &str) {
+    // NEW: Automatically satisfy the 'build' dependency first!
+    build_project(config, project_path);
+
     println!("Kaamiplier log: Running {}...", project_path);
 
     let class_path = format!("{}/{}", project_path, config.output);
@@ -146,5 +153,45 @@ fn clean_project(config: &ProjectConfig, project_path: &str) {
         }
     } else {
         println!("Kaamiplier log: Nothing to clean. The build directory doesn't exist.");
+    }
+}
+
+// NEW: The Packaging Supervisor
+fn package_project(config: &ProjectConfig, project_path: &str) {
+
+    build_project(config, project_path);
+    
+println!("Kaamiplier log: Packaging {} into a To-Go Box (JAR)...", project_path);
+    let output_dir = format!("{}/{}", project_path, config.output);
+    let jar_name = format!("{}.jar", config.name);
+    let jar_path = format!("{}/{}", output_dir, jar_name);
+
+
+
+let status_result = Command::new("jar")
+        .arg("cfe")
+        .arg(&jar_path)
+        .arg(&config.main_class)
+        .arg("-C")
+        .arg(&output_dir)
+        .arg(".") 
+        .status();
+
+    // Now we safely check if the OS actually found the tool
+    match status_result {
+        Ok(status) => {
+            // The tool was found and it ran! Now did it succeed?
+            if status.success() {
+                println!("Kaamiplier log: Successfully packaged into {}", jar_path);
+            } else {
+                println!("Kaamiplier log: Packaging failed! The jar tool reported an error.");
+            }
+        }
+        Err(error) => {
+            // The OS couldn't even find or start the tool!
+            println!("Kaamiplier log: ERROR - Could not find the 'jar' tool on your system!");
+            println!("System reason: {}", error);
+            println!("Hint: Make sure your Java JDK 'bin' folder is added to your Windows PATH.");
+        }
     }
 }
