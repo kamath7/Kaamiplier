@@ -26,11 +26,25 @@ fn main() {
     let project_path = &args[2];
 
     let config_path = format!("{}/kaamiplier.toml", project_path);
-    let config_contents = fs::read_to_string(&config_path)
-        .expect("Kaamiplier log: Failed to read kaamiplier.toml. Does it exist?");
 
-    let config: ProjectConfig = toml::from_str(&config_contents)
-        .expect("Kaamiplier log: Failed to parse TOML configuration");
+    let config_contents = match fs::read_to_string(&config_path) {
+        Ok(text) => text,
+        Err(error) => {
+            println!("Kaamiplier ERROR: Cannot read recipe card at '{}'.", config_path);
+            println!("System reason: {}", error);
+            println!("Are you sure this is a valid Kaamiplier project?");
+            std::process::exit(1); 
+        }
+    };
+
+    let config: ProjectConfig = match toml::from_str(&config_contents) {
+        Ok(parsed_config) => parsed_config,
+        Err(error) => {
+            println!("Kaamiplier ERROR: Your kaamiplier.toml file is corrupted!");
+            println!("Parser reason: {}", error);
+            std::process::exit(1);
+        }
+    };
 
     println!("Kaamiplier log: Processing project '{}'...", config.name);
 
